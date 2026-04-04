@@ -1,0 +1,350 @@
+
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  // url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  AGENT
+}
+
+enum Currency {
+  RWF
+  USD
+  EUR
+  GBP
+}
+
+enum PropertyKind {
+  HOUSE
+  LAND
+}
+
+enum PropertyPurpose {
+  SELL
+  BUY
+  RENT
+  LETTINGS
+}
+
+enum MarketType {
+  ON_MARKET
+  OFF_MARKET
+}
+
+enum PropertyStatus {
+  DRAFT
+  ACTIVE
+  PENDING
+  SOLD
+  RENTED
+  ARCHIVED
+}
+
+enum ListingVisibility {
+  PUBLIC
+  PRIVATE
+  HIDDEN
+}
+
+enum RentType {
+  LONG_TERM
+  SHORT_STAY
+}
+
+enum MoneyPeriod {
+  MONTH
+  NIGHT
+  WEEK
+  YEAR
+}
+
+enum FurnishedType {
+  FURNISHED
+  UNFURNISHED
+  PART_FURNISHED
+}
+
+enum TitleType {
+  FREEHOLD
+  LEASEHOLD
+  CUSTOMARY
+}
+
+enum TitleStatus {
+  READY
+  IN_PROCESS
+  UNKNOWN
+}
+
+enum AccessRoadType {
+  TARMAC
+  MURRAM
+  PRIVATE
+  NONE
+}
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum DocumentKind {
+  BROCHURE
+  FLOOR_PLAN
+  TITLE_DEED
+  OTHER
+}
+
+enum ImageCategory {
+  COVER
+  GALLERY
+  INTERIOR
+  EXTERIOR
+  BEDROOM
+  BATHROOM
+  KITCHEN
+  LIVING_ROOM
+  DINING
+  AMENITY
+  MAP
+  OTHER
+}
+
+enum FileStorageProvider {
+  LOCAL
+  S3
+  R2
+  SUPABASE
+  MINIO
+}
+
+model User {
+  id           String   @id @default(cuid())
+  authUserId   String   @unique @db.Uuid
+  name         String
+  email        String   @unique
+  role         UserRole @default(USER)
+  phoneNumber  String?
+  isActive     Boolean  @default(true)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  properties   Property[] @relation("AgentProperties")
+
+  @@index([email])
+  @@index([authUserId])
+  @@index([role])
+  @@index([isActive])
+}
+
+model Property {
+  id                    String             @id @default(cuid())
+  slug                  String             @unique
+  referenceCode         String?            @unique
+  title                 String
+  description           String?
+  highlights            String[]
+
+  kind                  PropertyKind
+  purpose               PropertyPurpose
+  marketType            MarketType         @default(ON_MARKET)
+  status                PropertyStatus     @default(DRAFT)
+  visibility            ListingVisibility  @default(PUBLIC)
+
+  rentType              RentType?
+
+  priceAmount           Decimal?           @db.Decimal(18, 2)
+  priceCurrency         Currency?
+  pricePeriod           MoneyPeriod?
+  priceLabel            String?
+  priceOnApplication    Boolean            @default(false)
+
+  bedrooms              Int?
+  bathrooms             Int?
+  parkingSpaces         Int?
+  yearBuilt             Int?
+
+  isFeatured            Boolean            @default(false)
+  isSearchable          Boolean            @default(true)
+  isPubliclyVisible     Boolean            @default(true)
+  showExactLocation     Boolean            @default(false)
+  allowPublicInquiry    Boolean            @default(true)
+  allowBrochureDownload Boolean            @default(true)
+
+  agentId               String?
+  agent                 User?              @relation("AgentProperties", fields: [agentId], references: [id], onDelete: SetNull)
+
+  location              PropertyLocation?
+  media                 PropertyMedia[]
+  house                 HouseDetails?
+  plot                  PlotDetails?
+
+  publishedAt           DateTime?
+  archivedAt            DateTime?
+
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  @@index([slug])
+  @@index([referenceCode])
+  @@index([kind])
+  @@index([purpose])
+  @@index([marketType])
+  @@index([status])
+  @@index([visibility])
+  @@index([rentType])
+  @@index([agentId])
+  @@index([isFeatured])
+  @@index([isSearchable])
+  @@index([isPubliclyVisible])
+  @@index([createdAt])
+  @@index([publishedAt])
+}
+
+model PropertyLocation {
+  id               String    @id @default(cuid())
+  propertyId       String    @unique
+
+  country          String
+  city             String?
+  province         String?
+  district         String?
+  sector           String?
+  cell             String?
+  village          String?
+  addressLine1     String?
+  addressLine2     String?
+  postalCode       String?
+
+  lat              Decimal?  @db.Decimal(10, 7)
+  lng              Decimal?  @db.Decimal(10, 7)
+
+  property         Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([country])
+  @@index([city])
+  @@index([province])
+  @@index([district])
+  @@index([sector])
+  @@index([postalCode])
+}
+
+model PropertyMedia {
+  id                    String               @id @default(cuid())
+  propertyId            String
+
+  kind                  MediaKind
+  documentKind          DocumentKind?
+  imageCategory         ImageCategory?
+
+  storageProvider       FileStorageProvider
+  storageBucket         String?
+  storageKey            String               @unique
+  originalFileName      String
+  mimeType              String
+  fileExtension         String
+  fileSizeBytes         BigInt
+
+  width                 Int?
+  height                Int?
+  durationSec           Int?
+  pageCount             Int?
+
+  checksumSha256        String?              @unique
+
+  title                 String?
+  altText               String?
+  caption               String?
+
+  sortOrder             Int                  @default(0)
+  isCover               Boolean              @default(false)
+  isPrimaryVideo        Boolean              @default(false)
+  isPublic              Boolean              @default(true)
+  isDownloadable        Boolean              @default(false)
+
+  uploadedByUserId      String?
+  uploadedAt            DateTime             @default(now())
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  property              Property             @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([kind])
+  @@index([documentKind])
+  @@index([imageCategory])
+  @@index([sortOrder])
+  @@index([isCover])
+  @@index([isPrimaryVideo])
+  @@index([isPublic])
+  @@index([uploadedAt])
+  @@index([propertyId, kind, sortOrder])
+  @@index([propertyId, isCover])
+}
+
+model HouseDetails {
+  id                    String          @id @default(cuid())
+  propertyId            String          @unique
+
+  bedrooms              Int?
+  bathrooms             Int?
+  toilets               Int?
+  kitchens              Int?
+  lounges               Int?
+  diningRooms           Int?
+
+  sizeSqm               Decimal?        @db.Decimal(10, 2)
+  plotSizeSqm           Decimal?        @db.Decimal(12, 2)
+
+  furnished             FurnishedType?
+  amenities             String[]
+
+  hasGarden             Boolean?
+  hasBalcony            Boolean?
+  hasTerrace            Boolean?
+  hasSwimmingPool       Boolean?
+  hasInternetFiber      Boolean?
+  hasElectricity        Boolean?
+  hasWaterTank          Boolean?
+  hasSecurity           Boolean?
+
+  property              Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model PlotDetails {
+  id                    String          @id @default(cuid())
+  propertyId            String          @unique
+
+  plotSizeSqm           Decimal         @db.Decimal(12, 2)
+  zoning                String?
+
+  titleType             TitleType?
+  titleStatus           TitleStatus?
+  accessRoad            AccessRoadType?
+
+  water                 Boolean?
+  electricity           Boolean?
+  internetFiber         Boolean?
+  sewage                Boolean?
+
+  surveyAvailable       Boolean?
+  boundariesMarked      Boolean?
+  restrictions          String[]
+
+  property              Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([titleType])
+  @@index([titleStatus])
+  @@index([accessRoad])
+}
