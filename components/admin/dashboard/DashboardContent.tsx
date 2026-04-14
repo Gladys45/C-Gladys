@@ -43,7 +43,7 @@
 //   );
 // }
 
-
+"use client";
 import type {
   DashboardTabKey,
   ViewMode,

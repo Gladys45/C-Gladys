@@ -18,9 +18,9 @@ type HeroSectionProps = {
 
 const DEFAULT_QUICK_LINKS: QuickLink[] = [
   { name: "Properties", href: "/properties" },
-  { name: "Team", href: "/team" },
+  { name: "Hotels management", href: "#" },
   { name: "Services", href: "/services" },
-  { name: "Contact", href: "/contact_us" },
+  { name: "Invest in Rwanda", href: "/services" },
 ];
 
 export default function HeroSection({
@@ -39,8 +39,8 @@ export default function HeroSection({
         preload="auto"
         className="absolute inset-0 h-full w-full object-cover"
       >
-        <source src="/assets/BOSCO.webm" type="video/webm" />
-        <source src="/assets/BOSCO.mp4" type="video/mp4" />
+        <source src="/assets/vid.webm" type="video/webm" />
+        <source src="/assets/vid.webm" type="video/mp4" />
       </video>
 
       <div className={`absolute inset-0 ${overlayClassName}`} />

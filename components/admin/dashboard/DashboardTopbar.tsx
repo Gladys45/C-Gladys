@@ -65,6 +65,8 @@
 //   );
 // }
 
+"use client";
+
 import {
   HiOutlineMagnifyingGlass,
   HiOutlineAdjustmentsHorizontal,

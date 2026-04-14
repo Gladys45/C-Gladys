@@ -1,3 +1,5 @@
+"use client";
+
 import type { KanbanColumn } from "@/types/admin-dashboard";
 
 type KanbanColumnsProps = {

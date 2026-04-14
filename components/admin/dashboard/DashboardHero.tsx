@@ -1,7 +1,9 @@
+"use client";
 import { HiOutlineArrowTrendingUp } from "react-icons/hi2";
 import type { SerializableAppUser } from "@/lib/auth-guards";
 import MiniHeroStat from "./MiniHeroStat";
 import { heroStats } from "@/data/admin-dashboard";
+import { use } from "react";
 
 type DashboardHeroProps = {
   currentUser: SerializableAppUser;
