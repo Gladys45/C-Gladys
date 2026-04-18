@@ -3,7 +3,7 @@ export type PropertyCreatePayload = {
   title: string;
   kind: "HOUSE" | "LAND";
   purpose: "SELL" | "BUY" | "RENT" | "LETTINGS";
-  marketType?: "ON_MARKET" | "OFF_MARKET" | null;
+  marketType?: "ON_MARKET" | "OFF_MARKET" | "OFF_PLAN" | "ON_PLAN" | null;
   rentType?: "LONG_TERM" | "SHORT_STAY" | null;
 
   priceAmount?: number | null;

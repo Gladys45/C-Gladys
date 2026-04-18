@@ -38,6 +38,8 @@ enum PropertyPurpose {
 enum MarketType {
   ON_MARKET
   OFF_MARKET
+  OFF_PLAN
+  ON_PLAN
 }
 
 enum PropertyStatus {

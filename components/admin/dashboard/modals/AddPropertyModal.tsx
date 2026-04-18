@@ -234,7 +234,7 @@ type FormState = {
   slug: string;
   kind: "HOUSE" | "LAND";
   purpose: "SELL" | "BUY" | "RENT" | "LETTINGS";
-  marketType: "ON_MARKET" | "OFF_MARKET" | "";
+  marketType: "ON_MARKET" | "OFF_MARKET" | "OFF_PLAN" | "ON_PLAN" | "";
   rentType: "LONG_TERM" | "SHORT_STAY" | "";
   priceAmount: string;
   priceCurrency: "RWF" | "USD" | "EUR" | "GBP";
@@ -661,6 +661,8 @@ export default function AddPropertyModal({
                   onChange={handleChange}
                 >
                   <option value="ON_MARKET">ON_MARKET</option>
+                    <option value="ON_PLAN">ON_PLAN</option>
+                    <option value="OFF_PLAN">OFF_PLAN</option>
                   <option value="OFF_MARKET">OFF_MARKET</option>
                 </Select>
               </Field>

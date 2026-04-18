@@ -6,7 +6,7 @@ export type ListingKind = "HOUSE" | "LAND";
 export type ListingStatus = "BUY" | "RENT" | "SOLD" | "LET";
 
 // Buy filters
-export type MarketType = "ON_MARKET" | "OFF_MARKET";
+export type MarketType = "ON_MARKET" | "OFF_MARKET" | "OFF_PLAN" | "ON_PLAN";
 
 // Rent filters
 export type RentType = "LONG_TERM" | "SHORT_STAY";

@@ -1,18 +1,8 @@
-// export type PropertyKind = "HOUSE" | "LAND";
-// export type PropertyPurpose = "SELL" | "BUY" | "RENT" | "LETTINGS";
-// export type MarketType = "ON_MARKET" | "OFF_MARKET";
-// export type RentType = "LONG_TERM" | "SHORT_STAY";
-// export type Currency = "RWF" | "USD" | "EUR" | "GBP";
-// export type MoneyPeriod = "MONTH" | "NIGHT" | "WEEK" | "YEAR";
-// export type FurnishedType = "FURNISHED" | "UNFURNISHED" | "PART_FURNISHED";
-// export type TitleType = "FREEHOLD" | "LEASEHOLD" | "CUSTOMARY";
-// export type TitleStatus = "READY" | "IN_PROCESS" | "UNKNOWN";
-// export type AccessRoadType = "TARMAC" | "MURRAM" | "PRIVATE" | "NONE";
 
 
 export type PropertyKind = "HOUSE" | "LAND";
 export type PropertyPurpose = "SELL" | "BUY" | "RENT" | "LETTINGS";
-export type MarketType = "ON_MARKET" | "OFF_MARKET";
+export type MarketType = "ON_MARKET" | "OFF_MARKET" | "OFF_PLAN" | "ON_PLAN";
 export type RentType = "LONG_TERM" | "SHORT_STAY";
 export type Currency = "RWF" | "USD" | "EUR" | "GBP";
 export type MoneyPeriod = "MONTH" | "NIGHT" | "WEEK" | "YEAR";

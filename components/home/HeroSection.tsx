@@ -18,9 +18,13 @@ type HeroSectionProps = {
 
 const DEFAULT_QUICK_LINKS: QuickLink[] = [
   { name: "Properties", href: "/properties" },
-  { name: "Hotels management", href: "#" },
+  { name: "Hotels management", href: "/hotels-management" },  // ✅ Changed from "#"
   { name: "Services", href: "/services" },
-  { name: "Invest in Rwanda", href: "/services" },
+  { name: "Invest in Rwanda", href: "/invest-rwanda" },    
+  // { name: "Properties", href: "/properties" },
+  // { name: "Hotels management", href: "#" },
+  // { name: "Services", href: "/services" },
+  // { name: "Invest in Rwanda", href: "/services" },
 ];
 
 export default function HeroSection({

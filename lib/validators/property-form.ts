@@ -86,7 +86,7 @@ export const propertyFormSchema = z
     kind: z.enum(["HOUSE", "LAND"]),
     purpose: z.enum(["SELL", "BUY", "RENT", "LETTINGS"]),
 
-    marketType: z.enum(["ON_MARKET", "OFF_MARKET"]).optional().or(z.literal("")),
+    marketType: z.enum(["ON_MARKET", "OFF_MARKET", "OFF_PLAN", "ON_PLAN"]).optional().or(z.literal("")),
     rentType: z.enum(["LONG_TERM", "SHORT_STAY"]).optional().or(z.literal("")),
 
     priceAmount: z.string(),
