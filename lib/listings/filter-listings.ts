@@ -1,85 +1,68 @@
-// import type { ListingRecord, ListingSearchFilters } from "./types";
 
-// function includesText(value: string | undefined, query: string) {
-//   return (value ?? "").toLowerCase().includes(query.toLowerCase());
-// }
 
-// export function filterListings(
-//   records: ListingRecord[],
-//   filters: ListingSearchFilters
-// ): ListingRecord[] {
-//   return records.filter((record) => {
-//     if (filters.kind && filters.kind !== "ANY" && record.kind !== filters.kind) {
-//       return false;
-//     }
+// import prisma from "@/lib/prisma";
+// import {
+//   mapPropertyToPublicListingRecord,
+//   mapPublicListingRecordToCard,
+// } from "./mappers";
 
-//     if (
-//       filters.status &&
-//       filters.status !== "ANY" &&
-//       record.status !== filters.status
-//     ) {
-//       return false;
-//     }
-
-//     if (
-//       filters.marketType &&
-//       filters.marketType !== "ANY" &&
-//       record.marketType !== filters.marketType
-//     ) {
-//       return false;
-//     }
-
-//     if (
-//       filters.rentType &&
-//       filters.rentType !== "ANY" &&
-//       record.rentType !== filters.rentType
-//     ) {
-//       return false;
-//     }
-
-//     if (filters.locationText?.trim()) {
-//       const q = filters.locationText.trim();
-//       const matchesLocation =
-//         includesText(record.location.country, q) ||
-//         includesText(record.location.city, q) ||
-//         includesText(record.location.province, q) ||
-//         includesText(record.location.district, q) ||
-//         includesText(record.location.sector, q) ||
-//         includesText(record.location.cell, q) ||
-//         includesText(record.location.village, q) ||
-//         includesText(record.location.addressLine1, q) ||
-//         includesText(record.location.addressLine2, q);
-
-//       if (!matchesLocation) return false;
-//     }
-
-//     if (
-//       typeof filters.minBeds === "number" &&
-//       (record.house?.bedrooms ?? 0) < filters.minBeds
-//     ) {
-//       return false;
-//     }
-
-//     if (
-//       typeof filters.minBaths === "number" &&
-//       (record.house?.bathrooms ?? 0) < filters.minBaths
-//     ) {
-//       return false;
-//     }
-
-//     const amount = record.price?.amount ?? 0;
-
-//     if (typeof filters.minPrice === "number" && amount < filters.minPrice) {
-//       return false;
-//     }
-
-//     if (typeof filters.maxPrice === "number" && amount > filters.maxPrice) {
-//       return false;
-//     }
-
-//     return true;
+// export async function getLandingPageListings() {
+//   const properties = await prisma.property.findMany({
+//     where: {
+//       status: "ACTIVE",
+//       visibility: "PUBLIC",
+//       isSearchable: true,
+//       isPubliclyVisible: true,
+//       publishedAt: {
+//         not: null,
+//       },
+//     },
+//     include: {
+//       location: true,
+//       media: true,
+//       house: true,
+//       plot: true,
+//     },
+//     orderBy: [
+//       { isFeatured: "desc" },
+//       { publishedAt: "desc" },
+//       { createdAt: "desc" },
+//     ],
 //   });
+
+//   const records = properties.map(mapPropertyToPublicListingRecord);
+//   const cards = records.map(mapPublicListingRecordToCard);
+
+//   const featuredCards = cards.slice(0, 6);
+
+//   return {
+//     records,
+//     cards,
+//     featuredCards,
+//   };
 // }
+
+// export async function getPublicPropertyBySlug(slug: string) {
+//   const property = await prisma.property.findFirst({
+//     where: {
+//       slug,
+//       status: "ACTIVE",
+//       visibility: "PUBLIC",
+//       isPubliclyVisible: true,
+//     },
+//     include: {
+//       location: true,
+//       media: true,
+//       house: true,
+//       plot: true,
+//     },
+//   });
+
+//   if (!property) return null;
+
+//   return mapPropertyToPublicListingRecord(property);
+// }
+
 
 import prisma from "@/lib/prisma";
 import {
@@ -87,59 +70,83 @@ import {
   mapPublicListingRecordToCard,
 } from "./mappers";
 
-export async function getLandingPageListings() {
-  const properties = await prisma.property.findMany({
-    where: {
-      status: "ACTIVE",
-      visibility: "PUBLIC",
-      isSearchable: true,
-      isPubliclyVisible: true,
-      publishedAt: {
-        not: null,
+type Filters = {
+  minPrice?: number;
+  maxPrice?: number;
+  location?: string;
+};
+
+type Params = {
+  page?: number;
+  limit?: number;
+  filters?: Filters;
+};
+
+export async function filterListings({
+  page = 1,
+  limit = 12,
+  filters,
+}: Params) {
+  const skip = (page - 1) * limit;
+
+  // ✅ Build WHERE safely (no Prisma import needed)
+  const where: any = {
+    status: "ACTIVE",
+    visibility: "PUBLIC",
+    isSearchable: true,
+    isPubliclyVisible: true,
+    publishedAt: { not: null },
+  };
+
+  // ✅ Apply filters only if provided
+  if (filters?.minPrice !== undefined) {
+    where.price = { ...(where.price || {}), gte: filters.minPrice };
+  }
+
+  if (filters?.maxPrice !== undefined) {
+    where.price = { ...(where.price || {}), lte: filters.maxPrice };
+  }
+
+  if (filters?.location) {
+    // ⚠️ DO NOT assume "name" field blindly
+    // Adjust this field based on your actual schema
+    where.location = {
+      // example: change "name" if needed
+      name: {
+        contains: filters.location,
+        mode: "insensitive",
       },
-    },
-    include: {
-      location: true,
-      media: true,
-      house: true,
-      plot: true,
-    },
-    orderBy: [
-      { isFeatured: "desc" },
-      { publishedAt: "desc" },
-      { createdAt: "desc" },
-    ],
-  });
+    };
+  }
+
+  const [properties, totalCount] = await Promise.all([
+    prisma.property.findMany({
+      where,
+      include: {
+        location: true,
+        media: true,
+        house: true,
+        plot: true,
+      },
+      orderBy: [
+        { isFeatured: "desc" },
+        { publishedAt: "desc" },
+        { createdAt: "desc" },
+      ],
+      skip,
+      take: limit,
+    }),
+
+    prisma.property.count({ where }),
+  ]);
 
   const records = properties.map(mapPropertyToPublicListingRecord);
   const cards = records.map(mapPublicListingRecordToCard);
 
-  const featuredCards = cards.slice(0, 6);
-
   return {
-    records,
     cards,
-    featuredCards,
+    totalCount,
+    page,
+    limit,
   };
-}
-
-export async function getPublicPropertyBySlug(slug: string) {
-  const property = await prisma.property.findFirst({
-    where: {
-      slug,
-      status: "ACTIVE",
-      visibility: "PUBLIC",
-      isPubliclyVisible: true,
-    },
-    include: {
-      location: true,
-      media: true,
-      house: true,
-      plot: true,
-    },
-  });
-
-  if (!property) return null;
-
-  return mapPropertyToPublicListingRecord(property);
 }

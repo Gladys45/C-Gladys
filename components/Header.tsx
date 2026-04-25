@@ -23,7 +23,7 @@ const MENU_LINKS: NavItem[] = [
   { name: "Properties", link: "/properties" },
   { name: "Hotels Management", link: "/hotels-management" },
   { name: "Invest In Rwanda", link: "/invest-rwanda" },
-  { name: "Contact Us", link: "/contact_us" },
+  // { name: "Contact Us", link: "/contact_us" },
 ];
 
 export default function Header() {

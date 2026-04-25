@@ -32,12 +32,12 @@ export default function DashboardHero({
               {currentUser.name}.
             </h3>
 
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/75 sm:text-base">
+            {/* <p className="mt-3 max-w-2xl text-sm leading-7 text-white/75 sm:text-base">
               Visualize your Property Contents
-            </p>
+            </p> */}
           </div>
 
-          <div className="grid min-w-full grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[420px]">
+          {/* <div className="grid min-w-full grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[420px]">
             {heroStats.map((item) => (
               <MiniHeroStat
                 key={item.label}
@@ -45,7 +45,7 @@ export default function DashboardHero({
                 value={item.value}
               />
             ))}
-          </div>
+          </div> */}
         </div>
       </div>
     </section>
