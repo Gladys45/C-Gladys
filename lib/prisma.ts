@@ -1,67 +1,55 @@
-// import "dotenv/config";
-// import { PrismaPg } from "@prisma/adapter-pg";
-// import { PrismaClient } from "@prisma/client/extension";
-// // import { PrismaClient } from "./generated/prisma";
-// import pg from "pg";
-
-// const connectionString = process.env.DATABASE_URL!;
-
-// const pool = new pg.Pool({
-//   connectionString,
-// });
-
-// const adapter = new PrismaPg(pool);
-
-// declare global {
-//   // eslint-disable-next-line no-var
-//   var prisma: PrismaClient | undefined;
-// }
-
-// const prisma =
-//   global.prisma ??
-//   new PrismaClient({
-//     adapter,
-//   });
-
-// if (process.env.NODE_ENV !== "production") {
-//   global.prisma = prisma;
-// }
-
-// export default prisma;
-
-
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
-import { PrismaClient } from "@prisma/client";
-
 const connectionString = process.env.DATABASE_URL;
 
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not set.");
-}
+// Check if database is configured
+export const isDatabaseConfigured = !!connectionString;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const globalForPrisma = globalThis as typeof globalThis & {
-  prisma?: PrismaClient;
-  pgPool?: Pool;
+  prisma?: unknown;
 };
 
-const pool =
-  globalForPrisma.pgPool ??
-  new Pool({
-    connectionString,
-  });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let prismaInstance: any = null;
 
-const adapter = new PrismaPg(pool);
+// Only initialize Prisma if DATABASE_URL is configured
+// This prevents the ".prisma/client/default not found" error
+// when Prisma hasn't been generated yet
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getPrisma(): Promise<any> {
+  if (!connectionString) {
+    return null;
+  }
 
-const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    adapter,
-  });
+  if (prismaInstance) {
+    return prismaInstance;
+  }
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.pgPool = pool;
-  globalForPrisma.prisma = prisma;
+  if (globalForPrisma.prisma) {
+    prismaInstance = globalForPrisma.prisma;
+    return prismaInstance;
+  }
+
+  try {
+    const { PrismaClient } = await import("@prisma/client");
+    const { PrismaPg } = await import("@prisma/adapter-pg");
+    const { Pool } = await import("pg");
+
+    const pool = new Pool({ connectionString });
+    const adapter = new PrismaPg(pool);
+
+    const client = new PrismaClient({ adapter });
+
+    if (process.env.NODE_ENV !== "production") {
+      globalForPrisma.prisma = client;
+    }
+
+    prismaInstance = client;
+    return client;
+  } catch (error) {
+    console.error("Failed to initialize Prisma client:", error);
+    return null;
+  }
 }
 
-export default prisma;
+// For backwards compatibility - but prefer using getPrisma()
+export default prismaInstance;
