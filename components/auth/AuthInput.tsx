@@ -63,6 +63,7 @@ interface AuthInputProps {
   value: string;
   error?: string;
   disabled?: boolean;
+  autoComplete?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -75,6 +76,7 @@ export default function AuthInput({
   value,
   error,
   disabled = false,
+  autoComplete,
   onChange,
 }: AuthInputProps) {
   return (
@@ -90,6 +92,7 @@ export default function AuthInput({
         placeholder={placeholder}
         value={value}
         disabled={disabled}
+        autoComplete={autoComplete}
         onChange={onChange}
         className={classNames(
           "h-12 w-full rounded-xl border px-4 outline-none transition-all duration-200 bg-white",
