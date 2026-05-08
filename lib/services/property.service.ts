@@ -1,18 +1,14 @@
-
-
-
-import {
-  DocumentKind,
-  ImageCategory,
-  ListingVisibility,
-  MarketType,
-  MediaKind,
-  Prisma,
-  PropertyKind,
-} from "@/lib/generated/prisma";
-import prisma from "@/lib/prisma";
+import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { storePropertyMediaFile } from "@/lib/storage/properties_media";
 import { createPropertySchema } from "../validators/properties";
+
+// Define types inline to avoid importing from non-existent generated prisma
+type DocumentKind = "FLOOR_PLAN" | "BROCHURE" | "LEGAL" | "CONTRACT" | "OTHER";
+type ImageCategory = "EXTERIOR" | "INTERIOR" | "GALLERY" | "FLOORPLAN" | "OTHER";
+type ListingVisibility = "PUBLIC" | "PRIVATE" | "HIDDEN";
+type MarketType = "ON_MARKET" | "OFF_MARKET" | "OFF_PLAN" | "ON_PLAN";
+type MediaKind = "IMAGE" | "VIDEO" | "DOCUMENT";
+type PropertyKind = "HOUSE" | "LAND";
 
 function normalizeSlug(value: string) {
   return value
@@ -54,10 +50,19 @@ export type CreatePropertyWithMediaInput = {
 };
 
 export async function createProperty(input: unknown) {
+  if (!isDatabaseConfigured) {
+    throw new Error("Database not configured.");
+  }
+
+  const prisma = await getPrisma();
+  if (!prisma) {
+    throw new Error("Failed to initialize database connection.");
+  }
+
   const parsed = createPropertySchema.parse(input);
 
   const slug = normalizeSlug(parsed.slug);
-  const isOffMarket = parsed.marketType === MarketType.OFF_MARKET;
+  const isOffMarket = parsed.marketType === "OFF_MARKET";
 
   const existing = await prisma.property.findUnique({
     where: { slug },
@@ -78,12 +83,12 @@ export async function createProperty(input: unknown) {
       purpose: parsed.purpose,
       marketType: parsed.marketType,
       status: parsed.status,
-      visibility: isOffMarket ? ListingVisibility.HIDDEN : parsed.visibility,
+      visibility: isOffMarket ? "HIDDEN" : parsed.visibility,
       rentType: parsed.rentType ?? null,
 
       priceAmount:
         parsed.priceAmount !== undefined && parsed.priceAmount !== null
-          ? new Prisma.Decimal(parsed.priceAmount)
+          ? parsed.priceAmount
           : null,
       priceCurrency: parsed.priceCurrency ?? null,
 
@@ -93,9 +98,9 @@ export async function createProperty(input: unknown) {
       highlights: parsed.highlights,
 
       bedrooms:
-        parsed.kind === PropertyKind.HOUSE ? parsed.bedrooms ?? null : null,
+        parsed.kind === "HOUSE" ? parsed.bedrooms ?? null : null,
       bathrooms:
-        parsed.kind === PropertyKind.HOUSE ? parsed.bathrooms ?? null : null,
+        parsed.kind === "HOUSE" ? parsed.bathrooms ?? null : null,
 
       location: {
         create: {
@@ -112,7 +117,7 @@ export async function createProperty(input: unknown) {
         },
       },
 
-      ...(parsed.kind === PropertyKind.HOUSE
+      ...(parsed.kind === "HOUSE"
         ? {
             house: {
               create: {
@@ -124,11 +129,11 @@ export async function createProperty(input: unknown) {
           }
         : {}),
 
-      ...(parsed.kind === PropertyKind.LAND
+      ...(parsed.kind === "LAND"
         ? {
             plot: {
               create: {
-                plotSizeSqm: new Prisma.Decimal(parsed.plotSizeSqm!),
+                plotSizeSqm: parsed.plotSizeSqm!,
                 restrictions: [],
               },
             },
@@ -144,6 +149,15 @@ export async function createProperty(input: unknown) {
 }
 
 export async function createPropertyMedia(input: CreatePropertyMediaInput) {
+  if (!isDatabaseConfigured) {
+    throw new Error("Database not configured.");
+  }
+
+  const prisma = await getPrisma();
+  if (!prisma) {
+    throw new Error("Failed to initialize database connection.");
+  }
+
   if (!input.propertyId?.trim()) {
     throw new Error("Property ID is required.");
   }
@@ -186,11 +200,11 @@ export async function createPropertyMedia(input: CreatePropertyMediaInput) {
   const safeAltText = cleanOptionalString(input.altText);
   const safeCaption = cleanOptionalString(input.caption);
 
-  const isImage = input.kind === MediaKind.IMAGE;
-  const isVideo = input.kind === MediaKind.VIDEO;
-  const isDocument = input.kind === MediaKind.DOCUMENT;
+  const isImage = input.kind === "IMAGE";
+  const isVideo = input.kind === "VIDEO";
+  const isDocument = input.kind === "DOCUMENT";
 
-  return prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx: typeof prisma) => {
     const lastMedia = await tx.propertyMedia.findFirst({
       where: {
         propertyId: input.propertyId,
@@ -210,7 +224,7 @@ export async function createPropertyMedia(input: CreatePropertyMediaInput) {
       await tx.propertyMedia.updateMany({
         where: {
           propertyId: input.propertyId,
-          kind: MediaKind.IMAGE,
+          kind: "IMAGE",
           isCover: true,
         },
         data: {
@@ -223,7 +237,7 @@ export async function createPropertyMedia(input: CreatePropertyMediaInput) {
       await tx.propertyMedia.updateMany({
         where: {
           propertyId: input.propertyId,
-          kind: MediaKind.VIDEO,
+          kind: "VIDEO",
           isPrimaryVideo: true,
         },
         data: {
@@ -232,17 +246,18 @@ export async function createPropertyMedia(input: CreatePropertyMediaInput) {
       });
     }
 
-    const data: Prisma.PropertyMediaUncheckedCreateInput = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: any = {
       propertyId: input.propertyId,
       kind: input.kind,
       title: safeTitle,
       altText: isImage ? safeAltText : null,
       caption: safeCaption,
       imageCategory: isImage
-        ? input.imageCategory ?? ImageCategory.GALLERY
+        ? input.imageCategory ?? "GALLERY"
         : null,
       documentKind: isDocument
-        ? input.documentKind ?? DocumentKind.OTHER
+        ? input.documentKind ?? "OTHER"
         : null,
       storageProvider: stored.storageProvider,
       storageBucket: stored.storageBucket,

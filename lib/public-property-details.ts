@@ -1,17 +1,13 @@
+import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 
-
-
-import {
-  Currency,
-  FurnishedType,
-  MarketType,
-  MediaKind,
-  Prisma,
-  PropertyKind,
-  PropertyPurpose,
-  RentType,
-} from "@/lib/generated/prisma";
-import prisma from "@/lib/prisma";
+// Define types inline to avoid importing from non-existent generated prisma
+type Currency = "RWF" | "USD" | "EUR" | "GBP";
+type FurnishedType = "UNFURNISHED" | "PARTIALLY" | "FULLY";
+type MarketType = "ON_MARKET" | "OFF_MARKET" | "OFF_PLAN" | "ON_PLAN";
+type MediaKind = "IMAGE" | "VIDEO" | "DOCUMENT";
+type PropertyKind = "HOUSE" | "LAND";
+type PropertyPurpose = "SELL" | "BUY" | "RENT" | "LETTINGS";
+type RentType = "LONG_TERM" | "SHORT_STAY";
 
 export type GalleryImage = {
   id: string;
@@ -137,14 +133,17 @@ type ResolvableMedia = {
   documentKind?: string | null;
 };
 
-function toNumber(value: Prisma.Decimal | null | undefined): number | null {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toNumber(value: any): number | null {
   if (!value) return null;
-  return Number(value.toString());
+  if (typeof value === "number") return value;
+  if (typeof value?.toString === "function") return Number(value.toString());
+  return null;
 }
 
 function buildSupabaseFileUrl(
   bucket?: string | null,
-  key?: string | null,
+  key?: string | null
 ): string | null {
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
@@ -203,7 +202,7 @@ function resolveMediaUrl(media: {
   if (media.storageBucket && media.storageKey) {
     const supabaseUrl = buildSupabaseFileUrl(
       media.storageBucket,
-      media.storageKey,
+      media.storageKey
     );
 
     if (supabaseUrl) {
@@ -231,7 +230,7 @@ function getFileNameFromPath(path?: string | null): string {
 }
 
 function isImageKind(kind: string | null | undefined): boolean {
-  return kind === MediaKind.IMAGE || kind === "IMAGE";
+  return kind === "IMAGE";
 }
 
 function isVideoKind(kind: string | null | undefined): boolean {
@@ -245,8 +244,19 @@ function isDocumentKind(kind: string | null | undefined): boolean {
 export async function getSimilarPublicProperties(
   propertyId: string,
   kind: PropertyKind,
-  purpose: PropertyPurpose,
+  purpose: PropertyPurpose
 ): Promise<SimilarPropertyItem[]> {
+  if (!isDatabaseConfigured) {
+    console.warn("Database not configured. Returning empty similar properties.");
+    return [];
+  }
+
+  const prisma = await getPrisma();
+  if (!prisma) {
+    console.warn("Failed to initialize Prisma. Returning empty similar properties.");
+    return [];
+  }
+
   const properties = await prisma.property.findMany({
     where: {
       id: { not: propertyId },
@@ -266,7 +276,7 @@ export async function getSimilarPublicProperties(
       location: true,
       media: {
         where: {
-          kind: MediaKind.IMAGE,
+          kind: "IMAGE",
           isPublic: true,
         },
         orderBy: [
@@ -279,9 +289,10 @@ export async function getSimilarPublicProperties(
     take: 6,
   });
 
-  return properties.map((property) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return properties.map((property: any) => {
     const cover =
-      property.media.find((item) => item.isCover) ??
+      property.media.find((item: { isCover: boolean }) => item.isCover) ??
       property.media[0] ??
       null;
 
@@ -308,8 +319,19 @@ export async function getSimilarPublicProperties(
 }
 
 export async function getPublicPropertyBySlug(
-  slug: string,
+  slug: string
 ): Promise<PropertyDetailsPageData | null> {
+  if (!isDatabaseConfigured) {
+    console.warn("Database not configured. Cannot fetch property.");
+    return null;
+  }
+
+  const prisma = await getPrisma();
+  if (!prisma) {
+    console.warn("Failed to initialize Prisma. Cannot fetch property.");
+    return null;
+  }
+
   const property = await prisma.property.findFirst({
     where: {
       slug,
