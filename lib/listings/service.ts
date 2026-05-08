@@ -62,7 +62,7 @@
 //   return mapPropertyToPublicListingRecord(property);
 // }
 
-import prisma from "@/lib/prisma";
+import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import {
   mapPropertyToPublicListingRecord,
   mapPublicListingRecordToCard,
@@ -70,6 +70,26 @@ import {
 
 // ✅ HOMEPAGE (LIMITED BUT SAFE)
 export async function getLandingPageListings() {
+  // Return empty data if database is not configured
+  if (!isDatabaseConfigured) {
+    console.warn("Database not configured. Returning empty listings.");
+    return {
+      records: [],
+      cards: [],
+      featuredCards: [],
+    };
+  }
+
+  const prisma = await getPrisma();
+  if (!prisma) {
+    console.warn("Failed to initialize Prisma. Returning empty listings.");
+    return {
+      records: [],
+      cards: [],
+      featuredCards: [],
+    };
+  }
+
   const properties = await prisma.property.findMany({
     where: {
       status: "ACTIVE",

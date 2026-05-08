@@ -1,199 +1,97 @@
-// import type {
-//   Currency,
-//   MarketType,
-//   MoneyPeriod,
-//   Prisma,
-//   Property,
-//   PropertyLocation,
-//   PropertyMedia,
-//   PropertyPurpose,
-//   PropertyStatus,
-//   RentType,
-//   HouseDetails,
-//   PlotDetails,
-// } from "@/lib/generated/prisma";
-// import type { ListingCard, ListingImage, ListingRecord, ListingStatus } from "./types";
-
-// export type PublicPropertyRow = Property & {
-//   location: PropertyLocation | null;
-//   media: PropertyMedia[];
-//   house: HouseDetails | null;
-//   plot: PlotDetails | null;
-// };
-
-// function decimalToNumber(value: Prisma.Decimal | null | undefined) {
-//   return value ? Number(value.toString()) : undefined;
-// }
-
-// function buildPublicStatus(
-//   purpose: PropertyPurpose,
-//   status: PropertyStatus
-// ): ListingStatus {
-//   if (status === "SOLD") return "SOLD";
-//   if (status === "RENTED") return "LET";
-//   if (purpose === "RENT" || purpose === "LETTINGS") return "RENT";
-//   return "BUY";
-// }
-
-// function buildLocationLabel(location: PropertyLocation | null) {
-//   return [
-//     location?.city,
-//     location?.district,
-//     location?.province,
-//     location?.country,
-//   ]
-//     .filter(Boolean)
-//     .join(", ");
-// }
-
-// function buildPriceLabel(args: {
-//   priceLabel?: string | null;
-//   priceOnApplication: boolean;
-//   amount?: Prisma.Decimal | null;
-//   currency?: Currency | null;
-//   period?: MoneyPeriod | null;
-// }) {
-//   if (args.priceOnApplication) return "POA";
-//   if (args.priceLabel?.trim()) return args.priceLabel.trim();
-//   if (!args.amount) return "Price not provided";
-
-//   const base = `${args.currency ?? ""} ${args.amount.toString()}`.trim();
-//   return args.period ? `${base} / ${args.period.toLowerCase()}` : base;
-// }
-
-// function buildImages(
-//   media: PropertyMedia[],
-//   fallbackAlt: string
-// ): ListingImage[] {
-//   return media
-//     .filter((item) => item.kind === "IMAGE" && item.isPublic)
-//     .sort((a, b) => {
-//       if (a.isCover && !b.isCover) return -1;
-//       if (!a.isCover && b.isCover) return 1;
-//       return a.sortOrder - b.sortOrder;
-//     })
-//     .map((item) => ({
-//       id: item.id,
-//       url: `/api/media/${item.id}`,
-//       alt: item.altText ?? fallbackAlt,
-//       isCover: item.isCover,
-//     }));
-// }
-
-// export function mapPropertyToListingRecord(property: PublicPropertyRow): ListingRecord {
-//   const images = buildImages(property.media, property.title);
-
-//   return {
-//     id: property.id,
-//     slug: property.slug,
-//     title: property.title,
-//     description: property.description ?? undefined,
-//     kind: property.kind,
-//     status: buildPublicStatus(property.purpose, property.status),
-//     marketType: property.marketType as MarketType,
-//     rentType: (property.rentType as RentType | null) ?? undefined,
-//     location: {
-//       country: property.location?.country ?? "",
-//       city: property.location?.city ?? undefined,
-//       province: property.location?.province ?? undefined,
-//       district: property.location?.district ?? undefined,
-//       sector: property.location?.sector ?? undefined,
-//       cell: property.location?.cell ?? undefined,
-//       village: property.location?.village ?? undefined,
-//       addressLine1: property.location?.addressLine1 ?? undefined,
-//       addressLine2: property.location?.addressLine2 ?? undefined,
-//     },
-//     priceOnApplication: property.priceOnApplication,
-//     price: property.priceAmount
-//       ? {
-//           amount: Number(property.priceAmount.toString()),
-//           currency: (property.priceCurrency ?? "RWF") as "RWF" | "USD" | "EUR" | "GBP",
-//           period: (property.pricePeriod as MoneyPeriod | null) ?? undefined,
-//           label: buildPriceLabel({
-//             priceLabel: property.priceLabel,
-//             priceOnApplication: property.priceOnApplication,
-//             amount: property.priceAmount,
-//             currency: property.priceCurrency,
-//             period: property.pricePeriod,
-//           }),
-//         }
-//       : undefined,
-//     house:
-//       property.kind === "HOUSE"
-//         ? {
-//             bedrooms: property.house?.bedrooms ?? property.bedrooms ?? undefined,
-//             bathrooms: property.house?.bathrooms ?? property.bathrooms ?? undefined,
-//             sizeSqm: decimalToNumber(property.house?.sizeSqm),
-//             furnished: property.house?.furnished ?? undefined,
-//             amenities: property.house?.amenities ?? [],
-//           }
-//         : undefined,
-//     plot:
-//       property.kind === "LAND"
-//         ? {
-//             plotSizeSqm: decimalToNumber(property.plot?.plotSizeSqm),
-//             zoning: property.plot?.zoning ?? undefined,
-//             accessRoad: property.plot?.accessRoad ?? undefined,
-//             titleType: property.plot?.titleType ?? undefined,
-//             titleStatus: property.plot?.titleStatus ?? undefined,
-//             surveyAvailable: property.plot?.surveyAvailable ?? undefined,
-//             boundariesMarked: property.plot?.boundariesMarked ?? undefined,
-//             utilities: {
-//               water: property.plot?.water ?? undefined,
-//               electricity: property.plot?.electricity ?? undefined,
-//               internetFiber: property.plot?.internetFiber ?? undefined,
-//               sewage: property.plot?.sewage ?? undefined,
-//             },
-//             restrictions: property.plot?.restrictions ?? [],
-//           }
-//         : undefined,
-//     highlights: property.highlights ?? [],
-//     images,
-//   };
-// }
-
-// export function mapListingRecordToCard(record: ListingRecord): ListingCard {
-//   const cover =
-//     record.images?.find((img) => img.isCover)?.url ??
-//     record.images?.[0]?.url ??
-//     "/images/placeholder-property.jpg";
-
-//   const locationLabel = [
-//     record.location.city,
-//     record.location.district,
-//     record.location.province,
-//     record.location.country,
-//   ]
-//     .filter(Boolean)
-//     .join(", ");
-
-//   return {
-//     id: record.id,
-//     listingId: record.id,
-//     href: `/properties/${record.slug}`,
-//     image: cover,
-//     name: record.title,
-//     kind: record.kind,
-//     tag: record.status,
-//     locationLabel,
-//     priceLabel: record.price?.label ?? (record.priceOnApplication ? "POA" : "Price not provided"),
-//     status: record.status,
-//   };
-// }
-
-import { Prisma } from "@/lib/generated/prisma";
-import type {
-  Currency,
-  MoneyPeriod,
-  Property,
-  PropertyLocation,
-  PropertyMedia,
-  HouseDetails,
-  PlotDetails,
-  PropertyPurpose,
-  PropertyStatus,
-} from "@/lib/generated/prisma";
 import type { PublicListingCard, PublicListingRecord } from "./types";
+
+// Define inline types for property data coming from Prisma
+// This avoids importing from the non-existent generated prisma client
+type Currency = "RWF" | "USD" | "EUR" | "GBP";
+type MoneyPeriod = "MONTH" | "NIGHT" | "WEEK" | "YEAR";
+type PropertyPurpose = "SELL" | "BUY" | "RENT" | "LETTINGS";
+type PropertyStatus = "DRAFT" | "ACTIVE" | "PENDING" | "SOLD" | "RENTED" | "ARCHIVED";
+type PropertyKind = "HOUSE" | "LAND";
+type MarketType = "ON_MARKET" | "OFF_MARKET" | "OFF_PLAN" | "ON_PLAN";
+type RentType = "LONG_TERM" | "SHORT_STAY";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type DecimalLike = { toString(): string } | null | undefined;
+
+interface PropertyLocation {
+  country?: string | null;
+  city?: string | null;
+  province?: string | null;
+  district?: string | null;
+  sector?: string | null;
+  cell?: string | null;
+  village?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+}
+
+interface PropertyMedia {
+  id: string;
+  kind: string;
+  isPublic: boolean;
+  isCover: boolean;
+  sortOrder: number;
+  altText?: string | null;
+  title?: string | null;
+}
+
+interface HouseDetails {
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  toilets?: number | null;
+  kitchens?: number | null;
+  lounges?: number | null;
+  diningRooms?: number | null;
+  sizeSqm?: DecimalLike;
+  plotSizeSqm?: DecimalLike;
+  furnished?: string | null;
+  amenities?: string[] | null;
+  hasGarden?: boolean | null;
+  hasBalcony?: boolean | null;
+  hasTerrace?: boolean | null;
+  hasSwimmingPool?: boolean | null;
+  hasInternetFiber?: boolean | null;
+  hasElectricity?: boolean | null;
+  hasWaterTank?: boolean | null;
+  hasSecurity?: boolean | null;
+}
+
+interface PlotDetails {
+  plotSizeSqm?: DecimalLike;
+  zoning?: string | null;
+  titleType?: string | null;
+  titleStatus?: string | null;
+  accessRoad?: string | null;
+  water?: boolean | null;
+  electricity?: boolean | null;
+  internetFiber?: boolean | null;
+  sewage?: boolean | null;
+  surveyAvailable?: boolean | null;
+  boundariesMarked?: boolean | null;
+  restrictions?: string[] | null;
+}
+
+interface Property {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string | null;
+  highlights?: string[] | null;
+  kind: PropertyKind;
+  purpose: PropertyPurpose;
+  status: PropertyStatus;
+  marketType?: MarketType | null;
+  rentType?: RentType | null;
+  priceAmount?: DecimalLike;
+  priceCurrency?: Currency | null;
+  pricePeriod?: MoneyPeriod | null;
+  priceLabel?: string | null;
+  priceOnApplication: boolean;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  parkingSpaces?: number | null;
+  yearBuilt?: number | null;
+}
 
 export type PropertyWithRelations = Property & {
   location: PropertyLocation | null;
@@ -202,7 +100,7 @@ export type PropertyWithRelations = Property & {
   plot: PlotDetails | null;
 };
 
-function decimalToNumber(value: Prisma.Decimal | null | undefined): number | undefined {
+function decimalToNumber(value: DecimalLike): number | undefined {
   if (!value) return undefined;
   return Number(value.toString());
 }
@@ -217,19 +115,8 @@ function formatPublicStatus(
   return "BUY";
 }
 
-function formatLocationLabel(location: PropertyLocation | null): string {
-  return [
-    location?.city,
-    location?.district,
-    location?.province,
-    location?.country,
-  ]
-    .filter(Boolean)
-    .join(", ") || "Location unavailable";
-}
-
 function formatPriceLabel(args: {
-  amount?: Prisma.Decimal | null;
+  amount?: DecimalLike;
   currency?: Currency | null;
   period?: MoneyPeriod | null;
   customLabel?: string | null;

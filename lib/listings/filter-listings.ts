@@ -1,70 +1,4 @@
-
-
-// import prisma from "@/lib/prisma";
-// import {
-//   mapPropertyToPublicListingRecord,
-//   mapPublicListingRecordToCard,
-// } from "./mappers";
-
-// export async function getLandingPageListings() {
-//   const properties = await prisma.property.findMany({
-//     where: {
-//       status: "ACTIVE",
-//       visibility: "PUBLIC",
-//       isSearchable: true,
-//       isPubliclyVisible: true,
-//       publishedAt: {
-//         not: null,
-//       },
-//     },
-//     include: {
-//       location: true,
-//       media: true,
-//       house: true,
-//       plot: true,
-//     },
-//     orderBy: [
-//       { isFeatured: "desc" },
-//       { publishedAt: "desc" },
-//       { createdAt: "desc" },
-//     ],
-//   });
-
-//   const records = properties.map(mapPropertyToPublicListingRecord);
-//   const cards = records.map(mapPublicListingRecordToCard);
-
-//   const featuredCards = cards.slice(0, 6);
-
-//   return {
-//     records,
-//     cards,
-//     featuredCards,
-//   };
-// }
-
-// export async function getPublicPropertyBySlug(slug: string) {
-//   const property = await prisma.property.findFirst({
-//     where: {
-//       slug,
-//       status: "ACTIVE",
-//       visibility: "PUBLIC",
-//       isPubliclyVisible: true,
-//     },
-//     include: {
-//       location: true,
-//       media: true,
-//       house: true,
-//       plot: true,
-//     },
-//   });
-
-//   if (!property) return null;
-
-//   return mapPropertyToPublicListingRecord(property);
-// }
-
-
-import prisma from "@/lib/prisma";
+import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import {
   mapPropertyToPublicListingRecord,
   mapPublicListingRecordToCard,
@@ -87,9 +21,32 @@ export async function filterListings({
   limit = 12,
   filters,
 }: Params) {
+  // Return empty data if database is not configured
+  if (!isDatabaseConfigured) {
+    console.warn("Database not configured. Returning empty listings.");
+    return {
+      cards: [],
+      totalCount: 0,
+      page,
+      limit,
+    };
+  }
+
+  const prisma = await getPrisma();
+  if (!prisma) {
+    console.warn("Failed to initialize Prisma. Returning empty listings.");
+    return {
+      cards: [],
+      totalCount: 0,
+      page,
+      limit,
+    };
+  }
+
   const skip = (page - 1) * limit;
 
-  // ✅ Build WHERE safely (no Prisma import needed)
+  // Build WHERE safely (no Prisma import needed)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = {
     status: "ACTIVE",
     visibility: "PUBLIC",
@@ -98,24 +55,23 @@ export async function filterListings({
     publishedAt: { not: null },
   };
 
-  // ✅ Apply filters only if provided
+  // Apply filters only if provided
   if (filters?.minPrice !== undefined) {
-    where.price = { ...(where.price || {}), gte: filters.minPrice };
+    where.priceAmount = { ...(where.priceAmount || {}), gte: filters.minPrice };
   }
 
   if (filters?.maxPrice !== undefined) {
-    where.price = { ...(where.price || {}), lte: filters.maxPrice };
+    where.priceAmount = { ...(where.priceAmount || {}), lte: filters.maxPrice };
   }
 
   if (filters?.location) {
-    // ⚠️ DO NOT assume "name" field blindly
-    // Adjust this field based on your actual schema
     where.location = {
-      // example: change "name" if needed
-      name: {
-        contains: filters.location,
-        mode: "insensitive",
-      },
+      OR: [
+        { city: { contains: filters.location, mode: "insensitive" } },
+        { district: { contains: filters.location, mode: "insensitive" } },
+        { province: { contains: filters.location, mode: "insensitive" } },
+        { country: { contains: filters.location, mode: "insensitive" } },
+      ],
     };
   }
 

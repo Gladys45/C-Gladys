@@ -1,101 +1,51 @@
-
-
-
-// import { z } from "zod";
-// import {
-//   Currency,
-//   ListingVisibility,
-//   MarketType,
-//   PropertyKind,
-//   PropertyPurpose,
-//   PropertyStatus,
-//   RentType,
-// } from "@/lib/generated/prisma";
-
-// const emptyToNull = (value: unknown) => {
-//   if (typeof value !== "string") return value;
-//   const trimmed = value.trim();
-//   return trimmed === "" ? null : trimmed;
-// };
-
-// const emptyToUndefined = (value: unknown) => {
-//   if (typeof value !== "string") return value;
-//   const trimmed = value.trim();
-//   return trimmed === "" ? undefined : trimmed;
-// };
-
-// export const createPropertySchema = z
-//   .object({
-//     title: z.string().trim().min(2, "Title is required."),
-//     slug: z.string().trim().min(2, "Slug is required."),
-//     description: z.preprocess(emptyToNull, z.string().nullable().optional()),
-
-//     kind: z.nativeEnum(PropertyKind),
-//     purpose: z.nativeEnum(PropertyPurpose),
-//     marketType: z.nativeEnum(MarketType).default(MarketType.ON_MARKET),
-//     status: z.nativeEnum(PropertyStatus).default(PropertyStatus.DRAFT),
-//     visibility: z.nativeEnum(ListingVisibility).default(ListingVisibility.PUBLIC),
-//     rentType: z.preprocess(
-//       emptyToNull,
-//       z.nativeEnum(RentType).nullable().optional()
-//     ),
-
-//     priceAmount: z.preprocess(
-//       emptyToUndefined,
-//       z.coerce.number().nonnegative().optional()
-//     ),
-//     priceCurrency: z.preprocess(
-//       emptyToNull,
-//       z.nativeEnum(Currency).nullable().optional()
-//     ),
-
-//     country: z.string().trim().min(1, "Country is required."),
-//     city: z.preprocess(emptyToNull, z.string().nullable().optional()),
-//     province: z.preprocess(emptyToNull, z.string().nullable().optional()),
-//     district: z.preprocess(emptyToNull, z.string().nullable().optional()),
-//     sector: z.preprocess(emptyToNull, z.string().nullable().optional()),
-//     cell: z.preprocess(emptyToNull, z.string().nullable().optional()),
-//     village: z.preprocess(emptyToNull, z.string().nullable().optional()),
-//     addressLine1: z.preprocess(emptyToNull, z.string().nullable().optional()),
-//     addressLine2: z.preprocess(emptyToNull, z.string().nullable().optional()),
-//     postalCode: z.preprocess(emptyToNull, z.string().nullable().optional()),
-
-//     bedrooms: z.preprocess(
-//       emptyToUndefined,
-//       z.coerce.number().int().nonnegative().optional()
-//     ),
-//     bathrooms: z.preprocess(
-//       emptyToUndefined,
-//       z.coerce.number().int().nonnegative().optional()
-//     ),
-//     plotSizeSqm: z.preprocess(
-//       emptyToUndefined,
-//       z.coerce.number().positive().optional()
-//     ),
-
-//     highlights: z.array(z.string()).default([]),
-//   })
-//   .superRefine((data, ctx) => {
-//     if (data.kind === "LAND" && !data.plotSizeSqm) {
-//       ctx.addIssue({
-//         code: z.ZodIssueCode.custom,
-//         path: ["plotSizeSqm"],
-//         message: "Plot size is required for land.",
-//       });
-//     }
-//   });
-
-
 import { z } from "zod";
-import {
-  Currency,
-  ListingVisibility,
-  MarketType,
-  PropertyKind,
-  PropertyPurpose,
-  PropertyStatus,
-  RentType,
-} from "@/lib/generated/prisma";
+
+// Define enums inline to avoid importing from non-existent generated prisma
+const Currency = {
+  RWF: "RWF",
+  USD: "USD",
+  EUR: "EUR",
+  GBP: "GBP",
+} as const;
+
+const ListingVisibility = {
+  PUBLIC: "PUBLIC",
+  PRIVATE: "PRIVATE",
+  HIDDEN: "HIDDEN",
+} as const;
+
+const MarketType = {
+  ON_MARKET: "ON_MARKET",
+  OFF_MARKET: "OFF_MARKET",
+  OFF_PLAN: "OFF_PLAN",
+  ON_PLAN: "ON_PLAN",
+} as const;
+
+const PropertyKind = {
+  HOUSE: "HOUSE",
+  LAND: "LAND",
+} as const;
+
+const PropertyPurpose = {
+  SELL: "SELL",
+  BUY: "BUY",
+  RENT: "RENT",
+  LETTINGS: "LETTINGS",
+} as const;
+
+const PropertyStatus = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  PENDING: "PENDING",
+  SOLD: "SOLD",
+  RENTED: "RENTED",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+const RentType = {
+  LONG_TERM: "LONG_TERM",
+  SHORT_STAY: "SHORT_STAY",
+} as const;
 
 const toTrimmedOrNull = (value: unknown) => {
   if (typeof value !== "string") return value;
@@ -143,14 +93,14 @@ export const createPropertySchema = z
     slug: z.string().trim().min(2, "Slug is required."),
     description: z.preprocess(toTrimmedOrNull, z.string().nullable().optional()),
 
-    kind: z.nativeEnum(PropertyKind),
-    purpose: z.nativeEnum(PropertyPurpose),
-    marketType: z.nativeEnum(MarketType).default(MarketType.ON_MARKET),
-    status: z.nativeEnum(PropertyStatus).default(PropertyStatus.DRAFT),
-    visibility: z.nativeEnum(ListingVisibility).default(ListingVisibility.PUBLIC),
+    kind: z.enum([PropertyKind.HOUSE, PropertyKind.LAND]),
+    purpose: z.enum([PropertyPurpose.SELL, PropertyPurpose.BUY, PropertyPurpose.RENT, PropertyPurpose.LETTINGS]),
+    marketType: z.enum([MarketType.ON_MARKET, MarketType.OFF_MARKET, MarketType.OFF_PLAN, MarketType.ON_PLAN]).default(MarketType.ON_MARKET),
+    status: z.enum([PropertyStatus.DRAFT, PropertyStatus.ACTIVE, PropertyStatus.PENDING, PropertyStatus.SOLD, PropertyStatus.RENTED, PropertyStatus.ARCHIVED]).default(PropertyStatus.DRAFT),
+    visibility: z.enum([ListingVisibility.PUBLIC, ListingVisibility.PRIVATE, ListingVisibility.HIDDEN]).default(ListingVisibility.PUBLIC),
     rentType: z.preprocess(
       toTrimmedOrNull,
-      z.nativeEnum(RentType).nullable().optional()
+      z.enum([RentType.LONG_TERM, RentType.SHORT_STAY]).nullable().optional()
     ),
 
     priceAmount: z.preprocess(
@@ -159,7 +109,7 @@ export const createPropertySchema = z
     ),
     priceCurrency: z.preprocess(
       toTrimmedOrNull,
-      z.nativeEnum(Currency).nullable().optional()
+      z.enum([Currency.RWF, Currency.USD, Currency.EUR, Currency.GBP]).nullable().optional()
     ),
 
     country: z.string().trim().min(1, "Country is required."),
