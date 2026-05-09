@@ -70,7 +70,6 @@ import {
   HiOutlineViewColumns,
 } from "react-icons/hi2";
 
-import type { IconType } from "react-icons";
 import type { ViewMode } from "@/types/admin-dashboard";
 
 type ViewSwitcherProps = {
@@ -81,24 +80,32 @@ type ViewSwitcherProps = {
 type ViewItem = {
   key: ViewMode;
   label: string;
-  icon: IconType;
+  icon: JSX.Element;
 };
 
 const items: ViewItem[] = [
   {
     key: "grid",
     label: "Grid",
-    icon: HiOutlineSquares2X2,
+    icon: (
+      <HiOutlineSquares2X2 className="text-lg" />
+    ),
   },
+
   {
     key: "list",
     label: "List",
-    icon: HiOutlineListBullet,
+    icon: (
+      <HiOutlineListBullet className="text-lg" />
+    ),
   },
+
   {
     key: "kanban",
     label: "Kanban",
-    icon: HiOutlineViewColumns,
+    icon: (
+      <HiOutlineViewColumns className="text-lg" />
+    ),
   },
 ];
 
@@ -110,7 +117,6 @@ export default function ViewSwitcher({
     <div className="inline-flex items-center rounded-2xl border border-neutral-200 bg-[#FAFAFA] p-1">
       {items.map((item) => {
         const active = item.key === viewMode;
-        const Icon = item.icon;
 
         return (
           <button
@@ -124,7 +130,7 @@ export default function ViewSwitcher({
                 : "text-neutral-600 hover:text-black"
             )}
           >
-            <Icon className="text-lg" />
+            {item.icon}
 
             <span className="hidden sm:inline">
               {item.label}

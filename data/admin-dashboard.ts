@@ -1,10 +1,6 @@
 
 
-// import {
-//   HiOutlineHomeModern,
-//   HiOutlineCalendarDays,
-//   HiOutlineInbox,
-// } from "react-icons/hi2";
+
 import {
   HiHome,
   HiCalendar,
