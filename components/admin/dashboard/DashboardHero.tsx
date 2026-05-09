@@ -37,15 +37,7 @@ export default function DashboardHero({
             </p> */}
           </div>
 
-          {/* <div className="grid min-w-full grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[420px]">
-            {heroStats.map((item) => (
-              <MiniHeroStat
-                key={item.label}
-                label={item.label}
-                value={item.value}
-              />
-            ))}
-          </div> */}
+          
         </div>
       </div>
     </section>

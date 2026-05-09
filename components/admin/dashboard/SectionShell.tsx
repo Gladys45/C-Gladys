@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { HiOutlineBellAlert, HiOutlineUserCircle } from "react-icons/hi2";
+import { HiBell, HiUserCircle } from "react-icons/hi2";
 
 type SectionShellProps = {
   title: string;
@@ -25,13 +25,13 @@ export default function SectionShell({
             type="button"
             className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-neutral-200 transition hover:border-black hover:text-black"
           >
-            <HiOutlineBellAlert className="text-xl" />
+            <HiBell className="text-xl" />
           </button>
           <button
             type="button"
             className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-neutral-200 transition hover:border-black hover:text-black"
           >
-            <HiOutlineUserCircle className="text-xl" />
+            <HiUserCircle className="text-xl" />
           </button>
         </div>
       </div>

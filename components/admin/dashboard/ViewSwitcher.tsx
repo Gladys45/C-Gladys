@@ -23,17 +23,17 @@ export default function ViewSwitcher({
     {
       key: "grid",
       label: "Grid",
-      icon: <HiOutlineSquares2X2 className="text-lg" />,
+      icon: HiOutlineSquares2X2,
     },
     {
       key: "list",
       label: "List",
-      icon: <HiOutlineListBullet className="text-lg" />,
+      icon: HiOutlineListBullet,
     },
     {
       key: "kanban",
       label: "Kanban",
-      icon: <HiOutlineViewColumns className="text-lg" />,
+      icon: HiOutlineViewColumns,
     },
   ];
 

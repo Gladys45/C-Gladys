@@ -4,9 +4,11 @@
 import React, { forwardRef } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 // import type { PropertyFormValues } from "@/lib/validation/property-form";
+// import ChipsInput from "./ChipsInput";
+// import SectionCard from "./SectionCard";
+import { PropertyFormValues } from "@/lib/validators/property-form";
 import ChipsInput from "./ChipsInput";
 import SectionCard from "./SectionCard";
-import { PropertyFormValues } from "@/lib/validators/property-form";
 
 type Props = {
   slugPreview: string;

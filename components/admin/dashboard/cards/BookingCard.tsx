@@ -1,4 +1,4 @@
-import { HiOutlineCalendarDays } from "react-icons/hi2";
+import { HiCalendar } from "react-icons/hi";
 import StatusBadge from "../StatusBadge";
 
 type BookingCardProps = {
@@ -20,7 +20,7 @@ export default function BookingCard({
     <div className="rounded-[24px] border border-neutral-200 bg-white p-5 shadow-sm transition hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div className="rounded-2xl bg-neutral-100 p-3">
-          <HiOutlineCalendarDays className="text-2xl text-black" />
+          <HiCalendar className="text-2xl text-black" />
         </div>
         <StatusBadge label={status} />
       </div>
