@@ -63,6 +63,9 @@
 //   );
 // }
 
+
+
+
 import classNames from "classnames";
 import {
   HiOutlineSquares2X2,
@@ -70,6 +73,7 @@ import {
   HiOutlineViewColumns,
 } from "react-icons/hi2";
 
+import type { IconType } from "react-icons";
 import type { ViewMode } from "@/types/admin-dashboard";
 
 type ViewSwitcherProps = {
@@ -80,32 +84,26 @@ type ViewSwitcherProps = {
 type ViewItem = {
   key: ViewMode;
   label: string;
-  icon: JSX.Element;
+  icon: IconType;
 };
 
 const items: ViewItem[] = [
   {
     key: "grid",
     label: "Grid",
-    icon: (
-      <HiOutlineSquares2X2 className="text-lg" />
-    ),
+    icon: HiOutlineSquares2X2,
   },
 
   {
     key: "list",
     label: "List",
-    icon: (
-      <HiOutlineListBullet className="text-lg" />
-    ),
+    icon: HiOutlineListBullet,
   },
 
   {
     key: "kanban",
     label: "Kanban",
-    icon: (
-      <HiOutlineViewColumns className="text-lg" />
-    ),
+    icon: HiOutlineViewColumns,
   },
 ];
 
@@ -117,6 +115,8 @@ export default function ViewSwitcher({
     <div className="inline-flex items-center rounded-2xl border border-neutral-200 bg-[#FAFAFA] p-1">
       {items.map((item) => {
         const active = item.key === viewMode;
+
+        const Icon = item.icon;
 
         return (
           <button
@@ -130,7 +130,7 @@ export default function ViewSwitcher({
                 : "text-neutral-600 hover:text-black"
             )}
           >
-            {item.icon}
+            <Icon className="text-lg" />
 
             <span className="hidden sm:inline">
               {item.label}
