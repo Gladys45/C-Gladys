@@ -63,8 +63,6 @@
 //   );
 // }
 
-
-
 import classNames from "classnames";
 import {
   HiOutlineSquares2X2,
@@ -112,8 +110,6 @@ export default function ViewSwitcher({
     <div className="inline-flex items-center rounded-2xl border border-neutral-200 bg-[#FAFAFA] p-1">
       {items.map((item) => {
         const active = item.key === viewMode;
-
-        // IMPORTANT
         const Icon = item.icon;
 
         return (
